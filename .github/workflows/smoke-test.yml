@@ -1,0 +1,72 @@
+name: 上线自检
+
+# 三个平台（Vercel / Cloudflare Pages / GitHub Pages）的域名各不相同，
+# 逐个点开浏览器看太慢。这个工作流在每次推送后自动 curl 一遍，
+# 把 HTTP 状态、标题、canonical、og 标签直接打进 Actions 日志。
+#
+# 定位是「体检报告」而不是「守门员」：地址探测不到只给警告、不标红，
+# 免得别人看你仓库的提交历史时全是红叉。真需要卡门禁再改成 exit 1。
+
+on:
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: '要检查的地址（空格分隔）。留空则检查默认三个平台。'
+        required: false
+        default: ''
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 逐个探测线上地址
+        env:
+          INPUT_URLS: ${{ github.event.inputs.urls || '' }}
+        run: |
+          set -u
+
+          DEFAULT_URLS="https://mpc-gogogo.vercel.app/ https://mpc-gogogo.pages.dev/ https://wangyaowei2333333.github.io/MPC-GOGOGO/"
+          URLS="$INPUT_URLS"
+          if [ -z "$URLS" ]; then URLS="$DEFAULT_URLS"; fi
+
+          for url in $URLS; do
+            echo "=================================================="
+            echo "目标: $url"
+
+            code=""
+            for attempt in 1 2 3 4 5 6; do
+              # 失败时 curl 会往 stdout 写 000（所以不能再 `|| echo 000`，会拼成 000000）；
+              # 这里用 `|| code=000` 覆盖赋值，兜住「curl 什么都没输出就挂掉」的情况。
+              code=$(curl -sSL -o /tmp/page.html -w '%{http_code}' --max-time 30 "$url" 2>/dev/null) || code=000
+              if [ "$code" = "200" ]; then break; fi
+              echo "  第 $attempt 次尝试: HTTP $code —— 30 秒后重试（首次部署可能还在构建）"
+              sleep 30
+            done
+
+            echo "最终 HTTP: $code"
+
+            if [ "$code" != "200" ]; then
+              echo "::warning::$url 返回 $code"
+              continue
+            fi
+
+            echo "字节数   : $(wc -c < /tmp/page.html)"
+            echo "标题     : $(grep -o '<title>[^<]*</title>' /tmp/page.html | head -1 | sed 's/<[^>]*>//g')"
+            echo "canonical: $(grep -o 'rel="canonical"[^>]*href="[^"]*"' /tmp/page.html | head -1 | sed 's/.*href="//;s/"$//')"
+            echo "og:url   : $(grep -o 'og:url" content="[^"]*"' /tmp/page.html | head -1 | sed 's/.*content="//;s/"$//')"
+            echo "og:image : $(grep -o 'og:image" content="[^"]*"' /tmp/page.html | head -1 | sed 's/.*content="//;s/"$//')"
+
+            placeholders=$(grep -c '__SITE_URL__' /tmp/page.html || true)
+            echo "占位残留 : $placeholders 处"
+            if [ "$placeholders" != "0" ]; then
+              echo "::warning::$url 里仍有未替换的 __SITE_URL__ 占位"
+            fi
+          done
+
+          echo "=================================================="
+          echo "自检结束。"

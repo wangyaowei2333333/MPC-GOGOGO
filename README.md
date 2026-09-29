@@ -333,9 +333,33 @@ performance.getEntriesByType('resource').filter(r => /intro\./.test(r.name))
 
 | 平台 | 角色 | 地址 | 怎么配 |
 |---|---|---|---|
-| **Vercel** | **主站** | `https://<项目名>.vercel.app` | 导入仓库 → 框架选 Vite → Build `npm run build` → Output `dist`。之后 push 即自动部署 |
-| **Cloudflare Pages** | 国内线路 | `https://<项目名>.pages.dev` | Workers & Pages → 创建 Pages → 连 GitHub → 同样填 build / output |
+| **Vercel** | **主站** | `https://<项目名>.vercel.app` | 导入仓库 → 框架直接识别为 Vite（`vercel.json` 已写死 build / output）→ Deploy。之后 push 即自动部署 |
+| **Cloudflare Pages** | 国内线路 | `https://<项目名>.pages.dev` | Workers & Pages → 创建 Pages → 连 GitHub → Build `npm run build` / 输出 `dist` |
 | **GitHub Pages** | 备用镜像 | https://wangyaowei2333333.github.io/MPC-GOGOGO/ | 仓库 Settings → Pages → Source 选 **GitHub Actions**。`deploy-pages.yml` 会自动跑 |
+
+### 上线自检（`smoke-test.yml`）
+
+每次推送后自动跑，也可以手动触发（Actions → 上线自检 → Run workflow，可传入自定义地址）。
+它逐个 curl 三个平台的线上地址，把 HTTP 状态、标题、canonical、og 标签打进 Actions 日志。
+
+下面是 **GitHub Pages 那一条的实测输出**（2026-09-29 核验），Vercel / CF 出来的格式一样：
+
+```
+目标: https://wangyaowei2333333.github.io/MPC-GOGOGO/
+最终 HTTP: 200
+标题     : MPC · MINI PC CLUB — 极客组装成品电脑
+canonical: https://wangyaowei2333333.github.io/MPC-GOGOGO/
+og:url   : https://wangyaowei2333333.github.io/MPC-GOGOGO/
+og:image : https://wangyaowei2333333.github.io/MPC-GOGOGO/og-cover.jpg
+占位残留 : 0 处
+```
+
+设计上它是**体检报告**而不是门禁：探测失败只给 `::warning::`，不标红提交历史。
+首次部署时平台还在构建，所以内置了 6 次重试（每次间隔 30 秒）。
+
+> 为什么需要它：从**沙箱或公司网络**里常常连不到 `*.vercel.app` / `*.pages.dev`
+> （实测本机 DNS 对整个 `*.vercel.app` 通配劫持，返回 `104.244.43.x` 这类无关 IP，
+> 代理再回 502）。走 Actions 探测就绕开了这些干扰。
 
 `vite.config.ts` 里 `base` 默认是相对路径 `'./'`，所以根域和子路径都能跑。
 GitHub Pages 的 workflow 会自动注入 `VITE_BASE=/<仓库名>/`。
@@ -363,8 +387,8 @@ https://wangyaowei2333333.github.io/MPC-GOGOGO/   ← 兜底（本地构建走�
 > 为什么用 `__SITE_URL__` 而不是 `%SITE_URL%`：Vite 自己会用 `%NAME%` 语法替换
 > `import.meta.env`，自定义 token 带百分号有被它先吃掉的风险，留下未替换的占位符。
 
-> 部署后自查一条命令：`curl -s https://你的域名/ | grep canonical`，
-> 确认输出的是**线上真实域名**而不是占位符。
+> 部署后自查：本地 `curl -s https://你的域名/ | grep canonical`，
+> 确认输出的是**线上真实域名**而不是占位符。连不上该域名时改用上面的「上线自检」工作流。
 
 ### 域名怎么买、怎么绑
 
