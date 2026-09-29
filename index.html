@@ -13,7 +13,13 @@
     />
     <meta name="keywords" content="MPC,MINI PC CLUB,组装电脑,成品主机,小机箱,ITX,装机配置,极客电脑" />
     <meta name="author" content="MPC" />
-    <link rel="canonical" href="https://mpc.example.com/" />
+
+    <!--
+      __SITE_URL__ 由 vite.config.ts 的 mpc:site-url 插件在构建时替换，
+      按 VITE_SITE_URL → Vercel 生产域名 → Cloudflare Pages 域名 → GitHub Pages
+      的顺序取值。三处部署共用同一份源码，不要在这里写死域名。
+    -->
+    <link rel="canonical" href="__SITE_URL__" />
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="MPC · MINI PC CLUB" />
@@ -22,8 +28,11 @@
       property="og:description"
       content="3D 装机预览、配件兼容性校验、整机实测数据。"
     />
-    <meta property="og:image" content="./og-cover.jpg" />
+    <!-- og:* 与 twitter:* 的图片必须是绝对地址，微信/Twitter/Facebook 都不解析相对路径 -->
+    <meta property="og:url" content="__SITE_URL__" />
+    <meta property="og:image" content="__SITE_URL__og-cover.jpg" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="__SITE_URL__og-cover.jpg" />
 
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="./favicon.ico" sizes="32x32" />

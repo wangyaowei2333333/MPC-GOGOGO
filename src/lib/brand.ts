@@ -27,12 +27,20 @@ export const GRADIENT_STOPS: readonly GradientStop[] = [
   { at: 1.0, color: '#722EFF' },
 ]
 
+/**
+ * 站点绝对地址，构建时由 vite.config.ts 注入（见其中的 resolveSiteUrl）。
+ * 取值顺序：VITE_SITE_URL → Vercel 生产域名 → Cloudflare Pages 域名 → GitHub Pages。
+ * 换主域时不要改这里，改环境变量或 vite.config.ts 的兜底值。
+ */
+export const SITE_URL = __MPC_SITE_URL__
+
 export const BRAND = {
   name: 'MPC',
   fullName: 'MINI PC CLUB',
   title: 'MPC · MINI PC CLUB',
   email: '373967824@qq.com',
-  domain: 'mpc.example.com',
+  /** 纯域名形式（不带协议头和结尾斜杠），展示用 */
+  domain: SITE_URL.replace(/^https?:\/\//, '').replace(/\/+$/, ''),
 } as const
 
 /** 按 t(0~1) 取品牌渐变色，返回 [r,g,b] 0~1，给 three.js 用 */

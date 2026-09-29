@@ -329,14 +329,42 @@ performance.getEntriesByType('resource').filter(r => /intro\./.test(r.name))
 
 源码在 GitHub，三个平台都从同一个仓库构建，产物都是静态 `dist/`。
 
-| 平台 | 角色 | 怎么配 |
-|---|---|---|
-| **Vercel** | **主站** | 导入仓库 → 框架选 Vite → Build `npm run build` → Output `dist`。之后 push 即自动部署 |
-| **Cloudflare Pages** | 国内线路 | Workers & Pages → 创建 Pages → 连 GitHub → 同样填 build / output |
-| **GitHub Pages** | 备用镜像 | 仓库 Settings → Pages → Source 选 **GitHub Actions**。`deploy-pages.yml` 会自动跑 |
+仓库：`https://github.com/wangyaowei2333333/MPC-GOGOGO`
+
+| 平台 | 角色 | 地址 | 怎么配 |
+|---|---|---|---|
+| **Vercel** | **主站** | `https://<项目名>.vercel.app` | 导入仓库 → 框架选 Vite → Build `npm run build` → Output `dist`。之后 push 即自动部署 |
+| **Cloudflare Pages** | 国内线路 | `https://<项目名>.pages.dev` | Workers & Pages → 创建 Pages → 连 GitHub → 同样填 build / output |
+| **GitHub Pages** | 备用镜像 | https://wangyaowei2333333.github.io/MPC-GOGOGO/ | 仓库 Settings → Pages → Source 选 **GitHub Actions**。`deploy-pages.yml` 会自动跑 |
 
 `vite.config.ts` 里 `base` 默认是相对路径 `'./'`，所以根域和子路径都能跑。
 GitHub Pages 的 workflow 会自动注入 `VITE_BASE=/<仓库名>/`。
+
+### 站点绝对地址（canonical / og:url）怎么来的
+
+`<link rel="canonical">`、`og:url`、`og:image` 必须是**绝对地址**（微信 / Twitter 不解析相对路径），
+但三个平台域名各不相同。所以**不要写死**，由 `vite.config.ts` 的 `resolveSiteUrl()` 在构建时解析：
+
+```
+VITE_SITE_URL                    ← 显式指定，优先级最高
+  ↓ 没有就用
+VERCEL_PROJECT_PRODUCTION_URL    ← Vercel 自动注入的生产域名（不带协议头）
+  ↓ 没有就用
+CF_PAGES_URL                     ← Cloudflare Pages 自动注入的部署地址
+  ↓ 没有就用
+https://wangyaowei2333333.github.io/MPC-GOGOGO/   ← 兜底（本地构建走这条）
+```
+
+解析结果注入两处：`index.html` 里的 `__SITE_URL__` 占位，以及业务代码里的全局常量
+`__MPC_SITE_URL__`（`src/lib/brand.ts` 的 `SITE_URL` / `BRAND.domain`）。
+
+**换主域时不用改代码**：在平台的环境变量里加 `VITE_SITE_URL=https://你的域名/` 即可。
+
+> 为什么用 `__SITE_URL__` 而不是 `%SITE_URL%`：Vite 自己会用 `%NAME%` 语法替换
+> `import.meta.env`，自定义 token 带百分号有被它先吃掉的风险，留下未替换的占位符。
+
+> 部署后自查一条命令：`curl -s https://你的域名/ | grep canonical`，
+> 确认输出的是**线上真实域名**而不是占位符。
 
 ### 国内访问提醒
 

@@ -28,16 +28,29 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: 计算部署地址
+        id: site
+        # 用 GITHUB_REPOSITORY / GITHUB_REPOSITORY_OWNER 而不是 github.event.repository.name：
+        # 后者只在 push 事件里有值，手动 Run workflow 时为空，base 会退化成 "/"，
+        # 子路径部署的资源全部 404（站点白屏）。GITHUB_REPOSITORY 两种事件都有值。
+        run: |
+          repo="${GITHUB_REPOSITORY#*/}"
+          owner="$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')"
+          echo "base=/${repo}/" >> "$GITHUB_OUTPUT"
+          echo "url=https://${owner}.github.io/${repo}/" >> "$GITHUB_OUTPUT"
+
       - name: 安装依赖
         run: npm ci
 
       - name: 构建
-        # GitHub Pages 部署在 /<repo>/ 子路径下，base 必须带上仓库名；
+        # base 是必须的：GitHub Pages 部署在 /<repo>/ 子路径下。
         # 素材处理（ffmpeg / sharp）只在本地跑，public/ 是提交进仓库的，
         # 所以 CI 里不需要 ffmpeg，构建很快。
         run: npm run build
         env:
-          VITE_BASE: /${{ github.event.repository.name }}/
+          VITE_BASE: ${{ steps.site.outputs.base }}
+          # 让 canonical / og:url 指向这个镜像地址（见 vite.config.ts）
+          VITE_SITE_URL: ${{ steps.site.outputs.url }}
 
       - uses: actions/configure-pages@v5
 
