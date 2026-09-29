@@ -267,7 +267,7 @@ FFMPEG=/path/to/ffmpeg npm run assets
 | 性能 / 配置 / FAQ | 列表 + 分隔线，不套卡片 | 同上，别为了「整齐」给所有东西加框 |
 | 联系 | 单列，留白拉到 `py-44` | 结尾要收得住，不要又一个信息密集区 |
 
-### 四个坑
+### 五个坑
 
 **1. clip-path 遮罩揭示会把自己锁死**
 
@@ -301,6 +301,27 @@ FFMPEG=/path/to/ffmpeg npm run assets
 `#FBFBFB` / `#FFFFFF` 都不对：H.264 编码后的白实测是 `#FDFDFD`（四角采样一致）。
 
 量法（改视频素材后要重测）：在页面里建 canvas，`drawImage(video, 0, 0)` 后取角落像素。
+
+**5. `rel="preload" as="video"` 是个「看起来在干活、其实什么都没干」的陷阱**
+
+原本 `index.html` 里写了 `<link rel="preload" href="./intro.mp4" as="video" type="video/mp4">`，
+想让启动动画的视频早点开始下载。实际三件事全错：
+
+- Chromium 不认 `as="video"`，控制台报 `` uses an unsupported `as` value ``，**请求根本不发出**；
+- 它指向 `intro.mp4`，而浏览器实际优先选的是更小的 `intro.webm`（`<video>` 里有多个 `<source>`），
+  等于对着一个用不上的文件做无用功；
+- 视频真正的请求是 `<video preload="auto">` 自己发的。
+
+**结论：不要给媒体写 `as="video"` 的 preload，删掉它。**（`as="image"` 是有效的，海报图那个要留着。）
+
+判法：看 resource timing 的 `initiatorType` ——
+
+```js
+performance.getEntriesByType('resource').filter(r => /intro\./.test(r.name))
+// 期望：intro-poster.jpg -> "link"（preload 生效）
+//       intro.webm       -> "video"（<video> 自己拉的）
+//       且不该出现 intro.mp4
+```
 
 ---
 

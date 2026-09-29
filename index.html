@@ -30,8 +30,14 @@
     <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
     <link rel="manifest" href="./site.webmanifest" />
 
+    <!--
+      启动动画只需要预热海报图（as="image" 是有效的，实测 22ms 就发出请求）。
+      不要给视频写 rel="preload" as="video"：Chromium 不认这个 as 值，
+      会在控制台报 "uses an unsupported `as` value"，而且请求根本不会发出。
+      更坑的是这里会指向 intro.mp4，而浏览器实际优先选的是更小的 intro.webm，
+      等于对着一个用不上的文件做无用功。视频由 <video preload="auto"> 自己拉。
+    -->
     <link rel="preload" as="image" href="./intro-poster.jpg" />
-    <link rel="preload" href="./intro.mp4" as="video" type="video/mp4" />
 
     <style>
       html,
