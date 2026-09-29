@@ -333,9 +333,9 @@ performance.getEntriesByType('resource').filter(r => /intro\./.test(r.name))
 
 | 平台 | 角色 | 地址 | 怎么配 |
 |---|---|---|---|
-| **Vercel** | **主站** | `https://<项目名>.vercel.app` | 导入仓库 → 框架直接识别为 Vite（`vercel.json` 已写死 build / output）→ Deploy。之后 push 即自动部署 |
-| **Cloudflare Pages** | 国内线路 | `https://<项目名>.pages.dev` | Workers & Pages → 创建 Pages → 连 GitHub → Build `npm run build` / 输出 `dist` |
-| **GitHub Pages** | 备用镜像 | https://wangyaowei2333333.github.io/MPC-GOGOGO/ | 仓库 Settings → Pages → Source 选 **GitHub Actions**。`deploy-pages.yml` 会自动跑 |
+| **Vercel** | **主站** | https://mpc-gogogo.vercel.app/ ✅ 已上线 | 导入仓库 → 框架直接识别为 Vite（`vercel.json` 已写死 build / output）→ Deploy。之后 push 即自动部署 |
+| **Cloudflare Pages** | 国内线路 | `https://<项目名>.pages.dev` ⏳ 尚未创建 | Workers & Pages → 创建 Pages → 连 GitHub → Build `npm run build` / 输出 `dist` |
+| **GitHub Pages** | 备用镜像 | https://wangyaowei2333333.github.io/MPC-GOGOGO/ ✅ 已上线 | 仓库 Settings → Pages → Source 选 **GitHub Actions**。`deploy-pages.yml` 会自动跑 |
 
 ### 上线自检（`smoke-test.yml`）
 
@@ -360,6 +360,49 @@ og:image : https://wangyaowei2333333.github.io/MPC-GOGOGO/og-cover.jpg
 > 为什么需要它：从**沙箱或公司网络**里常常连不到 `*.vercel.app` / `*.pages.dev`
 > （实测本机 DNS 对整个 `*.vercel.app` 通配劫持，返回 `104.244.43.x` 这类无关 IP，
 > 代理再回 502）。走 Actions 探测就绕开了这些干扰。
+
+#### 结果怎么读出来：别指望日志，用注解
+
+**`/actions/jobs/{id}/logs` 需要鉴权**，匿名访问是 403；
+抓 `actions/runs/<id>` 的页面 HTML 也会被网络拦掉。
+所以「打进日志」并不等于「能被读到」。
+
+真正对公开仓库**匿名可读**的是 check-runs 的 annotations 接口，
+于是工作流除日志外，**每个地址额外发一条 `::notice::`**：
+
+```bash
+# 取注解（无需令牌）
+curl -s "https://api.github.com/repos/<owner>/<repo>/commits/<sha>/check-runs"
+curl -s "https://api.github.com/repos/<owner>/<repo>/check-runs/<id>/annotations"
+```
+
+⚠️ **GitHub 每个步骤只保留 10 条 notice + 10 条 warning**，超出的静默丢弃。
+所以是「一个地址一条注解、字段挤在一行」，不是每个字段一条。
+
+#### 首次运行的实际结果（run #1，2026-09-29）
+
+`probe` 作业的注解里**只有一条警告**：
+
+| 地址 | 结果 |
+|---|---|
+| `https://mpc-gogogo.vercel.app/` | ✅ 无告警（HTTP 200） |
+| `https://wangyaowei2333333.github.io/MPC-GOGOGO/` | ✅ 无告警（HTTP 200） |
+| `https://mpc-gogogo.pages.dev/` | ⚠️ `返回 000` —— **Cloudflare Pages 尚未创建** |
+
+### 查 Vercel 部署结果（连不上 vercel.app 时的备用通道）
+
+Vercel 每次部署都会往 GitHub 的 deployments 接口回写**权威结果**，
+即使完全连不上 `*.vercel.app` 也能拿到这次部署的信息：
+
+```bash
+curl -s "https://api.github.com/repos/wangyaowei2333333/MPC-GOGOGO/deployments?per_page=5"
+curl -s "https://api.github.com/repos/wangyaowei2333333/MPC-GOGOGO/deployments/<id>/statuses"
+# → creator.login=vercel[bot]  environment=Production  state=success
+#   environment_url=https://<proj>-<hash>-<user>.vercel.app
+```
+
+`environment_url` 是**该次部署的不可变地址**，不等于生产别名 ——
+生产别名 API 不给，要么看面板，要么用上面的上线自检去试。
 
 `vite.config.ts` 里 `base` 默认是相对路径 `'./'`，所以根域和子路径都能跑。
 GitHub Pages 的 workflow 会自动注入 `VITE_BASE=/<仓库名>/`。
