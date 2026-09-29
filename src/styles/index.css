@@ -1,0 +1,346 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/geist';
+@import '@fontsource-variable/geist-mono';
+
+/* ==========================================================================
+   MPC 设计 token
+   品牌渐变来自 logo 位图逐像素采样：橙 #FF8A05 → 品红 #E62FA6 → 紫 #722EFF
+   ========================================================================== */
+
+@theme {
+  /* Geist：科技调的几何无衬线，比 Inter 更有骨架；中文仍交给系统字体，
+     这类站点的中文靠苹方/鸿蒙/雅黑反而更整齐。 */
+  --font-sans:
+    'Geist Variable', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'HarmonyOS Sans SC',
+    'Microsoft YaHei', 'Segoe UI', Roboto, sans-serif;
+  --font-mono:
+    'Geist Mono Variable', ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace;
+
+  /* 深色底：带一点蓝紫，避免纯黑发死 */
+  --color-ink-950: #05050a;
+  --color-ink-900: #08080d;
+  --color-ink-800: #101018;
+  --color-ink-700: #16161f;
+  --color-ink-600: #1e1e2a;
+
+  --color-fg: #f5f5f7;
+  --color-fg-muted: #a1a1aa;
+  --color-fg-dim: #6b6b76;
+
+  /* 品牌色 */
+  --color-brand-orange: #ff8a05;
+  --color-brand-ember: #ff6055;
+  --color-brand-pink: #e62fa6;
+  --color-brand-violet: #722eff;
+  --color-brand-glow: #8c28fa;
+
+  --color-line: rgb(255 255 255 / 0.08);
+  --color-line-strong: rgb(255 255 255 / 0.16);
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-quint: cubic-bezier(0.83, 0, 0.17, 1);
+
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+}
+
+/* --------------------------------------------------------------------------
+   品牌渐变
+   -------------------------------------------------------------------------- */
+
+@utility brand-gradient {
+  background-image: linear-gradient(
+    97deg,
+    #ff8a05 0%,
+    #ff6055 24%,
+    #e62fa6 46%,
+    #a824e1 72%,
+    #722eff 100%
+  );
+}
+
+@utility brand-text {
+  background-image: linear-gradient(
+    97deg,
+    #ff8a05 0%,
+    #ff6055 24%,
+    #e62fa6 46%,
+    #a824e1 72%,
+    #722eff 100%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+/* 玻璃卡片 */
+@utility panel {
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.045), rgb(255 255 255 / 0.015));
+  border: 1px solid var(--color-line);
+  backdrop-filter: blur(12px);
+}
+
+/* --------------------------------------------------------------------------
+   基础层
+   -------------------------------------------------------------------------- */
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+    background: var(--color-ink-900);
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    color: var(--color-fg);
+    background: var(--color-ink-900);
+    overflow-x: clip;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--color-brand-pink) 45%, transparent);
+    color: #fff;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-ink-900);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #26262f;
+    border: 3px solid var(--color-ink-900);
+    border-radius: 99px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #3a3a46;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand-pink);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  canvas {
+    display: block;
+    touch-action: pan-y;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   动画工具
+   -------------------------------------------------------------------------- */
+
+@keyframes mpc-rise {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 首屏内容从启动动画的白幕后面升上来，和 Intro 的退场接上 */
+.mpc-rise {
+  animation: mpc-rise 0.85s var(--ease-out-expo) both;
+}
+
+@keyframes mpc-logo-flow {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 200% 50%;
+  }
+}
+
+/*
+ * 导航栏 logo。
+ *
+ * 用 logo 自己当遮罩，底下铺一条横向流动的品牌渐变：字形轮廓不变，颜色是活的。
+ * 这样「动态 logo」是常驻页面的，而不只是启动动画里一闪而过。
+ *
+ * 遮罩 URL 必须由 JS 通过 --logo-url 注入 —— 写死相对路径的话，GitHub Pages
+ * 这种子路径部署会解析不到。
+ */
+.mpc-logo-mark {
+  display: inline-block;
+  height: 20px;
+  aspect-ratio: 786 / 278;
+  background-image: linear-gradient(
+    97deg,
+    #ff8a05 0%,
+    #ff6055 16%,
+    #e62fa6 33%,
+    #a824e1 50%,
+    #722eff 66%,
+    #a824e1 82%,
+    #e62fa6 100%
+  );
+  background-size: 220% 100%;
+  -webkit-mask: var(--logo-url) center / contain no-repeat;
+  mask: var(--logo-url) center / contain no-repeat;
+  animation: mpc-logo-flow 7s linear infinite;
+  transition: filter 0.3s var(--ease-out-expo);
+}
+.mpc-logo-mark:hover {
+  filter: drop-shadow(0 0 8px rgb(230 47 166 / 0.55));
+}
+
+@keyframes mpc-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes mpc-pulse-dot {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes mpc-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* 吉祥物小机器人 */
+@keyframes mpc-leg-a {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2.5px);
+  }
+}
+
+@keyframes mpc-leg-b {
+  0%,
+  100% {
+    transform: translateY(-2.5px);
+  }
+  50% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes mpc-mascot-jump {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  28% {
+    transform: translateY(-20px) scale(1.07, 0.94);
+  }
+  55% {
+    transform: translateY(-24px) scale(0.97, 1.05);
+  }
+  78% {
+    transform: translateY(0) scale(1.05, 0.92);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   入场动效：三套，各管一层
+   全站原来只有一套「淡入 + 上移」，九个区段滚下来节奏完全一样，
+   看着就像同一页重复了九次。这里按元素角色拆开。
+   -------------------------------------------------------------------------- */
+
+/* 标题：位移大、时长长，进得有重量感。正文反过来，短距离快淡入。
+   两层速度差拉开，滚动时才有层次。
+   注意：这里【不能】用 clip-path 做遮罩揭示 —— 初始 clip-path: inset(0 0 100%)
+   会把元素整个裁掉，IntersectionObserver 判定它没进入视口，于是 .is-in 永远加不上，
+   标题就永久消失了（自己把自己锁死）。用位移 + 时长区分才安全。 */
+.reveal-mask {
+  opacity: 0;
+  transform: translateY(26px);
+  transition:
+    opacity 0.65s var(--ease-out-expo),
+    transform 1.15s var(--ease-out-expo);
+}
+.reveal-mask.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* 列表项 / 卡片：同一组内逐项错开，延迟由 useReveal 写进 style */
+.reveal-item {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 0.65s var(--ease-out-expo),
+    transform 0.65s var(--ease-out-expo);
+}
+.reveal-item.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* 正文段落：纯淡入，位移压到最小，不跟标题抢注意力 */
+.reveal {
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 0.75s var(--ease-out-expo),
+    transform 0.75s var(--ease-out-expo);
+}
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .reveal,
+  .reveal-mask,
+  .reveal-item {
+    opacity: 1;
+    transform: none;
+    clip-path: none;
+    transition: none;
+  }
+  .mpc-rise {
+    animation: none;
+  }
+  .mpc-logo-mark {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

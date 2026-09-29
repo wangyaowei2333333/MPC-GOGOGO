@@ -1,0 +1,66 @@
+name: Weekly hardware data refresh
+
+# 每周自动更新一次硬件数据，并触发线上重新部署。
+#
+# 为什么用 GitHub Actions 而不是 Vercel Cron：
+#   Vercel Hobby 计划的 cron 每天只能触发 1 次、时间精度 ±1 小时，不够用。
+#   另外这个任务会自己产生提交，顺带绕开「仓库 60 天无提交则定时任务被暂停」的坑。
+
+on:
+  schedule:
+    # 每周一 01:00 UTC = 北京时间 09:00
+    - cron: '0 1 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  # 触发别的 workflow 需要 actions:write（默认 GITHUB_TOKEN 推的代码不会触发 on:push）
+  actions: write
+
+concurrency:
+  group: weekly-data
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 刷新硬件数据
+        # 配置了 MPC_PRICE_SOURCE 才会去拉价格，没配就只更新「数据更新」日期。
+        # 具体逻辑见 scripts/fetch-hardware.mjs
+        run: npm run data:update
+        env:
+          MPC_PRICE_SOURCE: ${{ vars.MPC_PRICE_SOURCE }}
+
+      - id: commit
+        name: 有变更就提交
+        run: |
+          git config user.name  "mpc-bot"
+          git config user.email "mpc-bot@users.noreply.github.com"
+          if git diff --quiet -- src/data/hardware.json; then
+            echo "数据没有变化，跳过提交"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git add src/data/hardware.json
+            git commit -m "chore(data): 每周硬件数据刷新 $(date -u +%F)"
+            git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 触发 GitHub Pages 重新部署
+        # Vercel / Cloudflare Pages 会被 git push 的 webhook 直接触发，不用管；
+        # 但 GITHUB_TOKEN 推的提交不会触发 on:push，所以 Pages 得显式喊一声。
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run deploy-pages.yml --ref "${GITHUB_REF_NAME}"

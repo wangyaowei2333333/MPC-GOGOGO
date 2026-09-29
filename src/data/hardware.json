@@ -1,0 +1,72 @@
+{
+  "_readme": [
+    "配件与跑分数据。这里填什么，网站就显示什么 —— 请只填真实数据，不要编。",
+    "价格填人民币数字，例如 1299。填 null 或留空，页面对应位置会自动隐藏，不会显示假数字。",
+    "models 是机型，留空数组 [] 时页面显示「陆续上架」占位，不会有假卡片。",
+    "benchmarks 是实测数据，一条 = 一个游戏或一项测试。",
+    "每周定时任务只会更新 updatedAt，不会动你手填的型号和价格。",
+    "字段说明见 README.md 的「数据怎么填」一节。"
+  ],
+  "updatedAt": "2026-09-23",
+
+  "models": [],
+
+  "parts": {
+    "cpu": [],
+    "gpu": [],
+    "motherboard": [],
+    "ram": [],
+    "storage": [],
+    "psu": [],
+    "cooler": [],
+    "case": []
+  },
+
+  "_example": {
+    "_说明": "下面是填好之后的形状，看一眼就懂。照这个结构往上面 models / parts 里加就行。",
+    "model": {
+      "id": "air",
+      "name": "MPC Air",
+      "tagline": "一句话卖点",
+      "formFactor": "ITX · 8.4L",
+      "price": 5999,
+      "cover": "./images/air.jpg",
+      "parts": {
+        "cpu": "AMD Ryzen 7 9700X",
+        "gpu": "NVIDIA RTX 5070",
+        "motherboard": "B850I",
+        "ram": "32GB DDR5 6000",
+        "storage": "1TB NVMe Gen4",
+        "psu": "750W SFX 金牌",
+        "cooler": "下压式风冷",
+        "case": "铝合金侧透"
+      },
+      "benchmarks": [
+        { "label": "赛博朋克 2077 · 2K 高画质", "value": 0, "unit": "fps" },
+        { "label": "烤机 30 分钟 · CPU 温度", "value": 0, "unit": "℃" }
+      ]
+    },
+    "part": {
+      "id": "cpu-9700x",
+      "name": "AMD Ryzen 7 9700X",
+      "brand": "AMD",
+      "spec": "8 核 16 线程 · 65W",
+      "price": 2299,
+      "note": "备注可留空"
+    }
+  },
+
+  "configurator": {
+    "categories": [
+      { "key": "cpu", "label": "CPU", "required": true },
+      { "key": "motherboard", "label": "主板", "required": true },
+      { "key": "gpu", "label": "显卡", "required": true },
+      { "key": "ram", "label": "内存", "required": true },
+      { "key": "storage", "label": "存储", "required": true },
+      { "key": "psu", "label": "电源", "required": true },
+      { "key": "cooler", "label": "散热", "required": true },
+      { "key": "case", "label": "机箱", "required": true }
+    ],
+    "buildFee": null
+  }
+}

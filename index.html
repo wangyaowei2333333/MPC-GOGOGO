@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN" data-phase="intro">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0A0A0F" />
+    <meta name="color-scheme" content="dark" />
+
+    <title>MPC · MINI PC CLUB — 极客组装成品电脑</title>
+    <meta
+      name="description"
+      content="MPC（MINI PC CLUB）极客组装成品电脑。3D 装机预览、配件兼容性校验、整机实测数据，一台一台手工组装。"
+    />
+    <meta name="keywords" content="MPC,MINI PC CLUB,组装电脑,成品主机,小机箱,ITX,装机配置,极客电脑" />
+    <meta name="author" content="MPC" />
+    <link rel="canonical" href="https://mpc.example.com/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="MPC · MINI PC CLUB" />
+    <meta property="og:title" content="MPC · MINI PC CLUB — 极客组装成品电脑" />
+    <meta
+      property="og:description"
+      content="3D 装机预览、配件兼容性校验、整机实测数据。"
+    />
+    <meta property="og:image" content="./og-cover.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="./favicon.ico" sizes="32x32" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <link rel="manifest" href="./site.webmanifest" />
+
+    <link rel="preload" as="image" href="./intro-poster.jpg" />
+    <link rel="preload" href="./intro.mp4" as="video" type="video/mp4" />
+
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: #fafafb;
+      }
+      html[data-phase='site'] body {
+        background: #0a0a0f;
+      }
+      #root {
+        min-height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

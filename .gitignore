@@ -1,0 +1,25 @@
+node_modules/
+dist/
+dist-ssr/
+.tmp/
+*.local
+
+.DS_Store
+Thumbs.db
+
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+.env
+.env.local
+.env.*.local
+
+src/data/hardware.local.json
+
+# 本地工作记录 / 会话数据，不属于站点代码，不进公开仓库
+.workbuddy/

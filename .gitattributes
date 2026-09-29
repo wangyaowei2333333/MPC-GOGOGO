@@ -1,0 +1,17 @@
+# 统一换行符，避免 Windows / macOS 协作时整文件 diff
+* text=auto eol=lf
+
+# 二进制素材不要被当成文本处理
+*.mp4 binary
+*.webm binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+
+# 生成物不参与语言统计
+dist/** linguist-generated=true
+package-lock.json linguist-generated=true
