@@ -2,10 +2,19 @@ name: 上线自检
 
 # 三个平台（Vercel / Cloudflare Pages / GitHub Pages）的域名各不相同，
 # 逐个点开浏览器看太慢。这个工作流在每次推送后自动 curl 一遍，
-# 把 HTTP 状态、标题、canonical、og 标签直接打进 Actions 日志。
+# 把 HTTP 状态、标题、canonical、og 标签打进 Actions 日志。
 #
 # 定位是「体检报告」而不是「守门员」：地址探测不到只给警告、不标红，
 # 免得别人看你仓库的提交历史时全是红叉。真需要卡门禁再改成 exit 1。
+#
+# ── 为什么要额外发 ::notice:: 注解 ──────────────────────────────
+# Actions 的日志下载接口 `/actions/jobs/{id}/logs` **需要鉴权**（匿名访问 403），
+# 所以「把结果打进日志」并不能被外部程序读到。
+# 而 check-runs 的 **annotations 接口是公开可读的**（公开仓库匿名可取），
+# 注解于是等价于「不需要令牌的日志」。
+#
+# 注意：GitHub 每个步骤只保留 **10 条 notice + 10 条 warning**，超出的会被丢掉。
+# 所以这里**每个地址只发 1 条 notice**，多字段挤在同一行里。
 
 on:
   workflow_dispatch:
@@ -55,14 +64,24 @@ jobs:
               continue
             fi
 
-            echo "字节数   : $(wc -c < /tmp/page.html)"
-            echo "标题     : $(grep -o '<title>[^<]*</title>' /tmp/page.html | head -1 | sed 's/<[^>]*>//g')"
-            echo "canonical: $(grep -o 'rel="canonical"[^>]*href="[^"]*"' /tmp/page.html | head -1 | sed 's/.*href="//;s/"$//')"
-            echo "og:url   : $(grep -o 'og:url" content="[^"]*"' /tmp/page.html | head -1 | sed 's/.*content="//;s/"$//')"
-            echo "og:image : $(grep -o 'og:image" content="[^"]*"' /tmp/page.html | head -1 | sed 's/.*content="//;s/"$//')"
-
+            # 注解是单行文本，换行会把命令截断，所以统一去掉 \n \r
+            host=$(echo "$url" | sed 's#^https\?://##; s#/.*$##')
+            title=$(grep -o '<title>[^<]*</title>' /tmp/page.html | head -1 | sed 's/<[^>]*>//g' | tr -d '\n\r')
+            canonical=$(grep -o 'rel="canonical"[^>]*href="[^"]*"' /tmp/page.html | head -1 | sed 's/.*href="//; s/"$//' | tr -d '\n\r')
+            ogurl=$(grep -o 'og:url" content="[^"]*"' /tmp/page.html | head -1 | sed 's/.*content="//; s/"$//' | tr -d '\n\r')
+            ogimg=$(grep -o 'og:image" content="[^"]*"' /tmp/page.html | head -1 | sed 's/.*content="//; s/"$//' | tr -d '\n\r')
             placeholders=$(grep -c '__SITE_URL__' /tmp/page.html || true)
+
+            echo "字节数   : $(wc -c < /tmp/page.html)"
+            echo "标题     : $title"
+            echo "canonical: $canonical"
+            echo "og:url   : $ogurl"
+            echo "og:image : $ogimg"
             echo "占位残留 : $placeholders 处"
+
+            # 一行装下全部关键信息，方便匿名读注解的程序直接解析
+            echo "::notice title=$host::HTTP $code | 标题=$title | canonical=$canonical | og:url=$ogurl | og:image=$ogimg | 占位残留=$placeholders"
+
             if [ "$placeholders" != "0" ]; then
               echo "::warning::$url 里仍有未替换的 __SITE_URL__ 占位"
             fi
