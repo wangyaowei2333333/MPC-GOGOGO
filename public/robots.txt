@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+# 站点上线后把下面这行换成真实域名并解注释，同时补一份 sitemap.xml。
+# 域名还没定，先不写死，免得给爬虫一个错地址。
+# Sitemap: https://<你的域名>/sitemap.xml
