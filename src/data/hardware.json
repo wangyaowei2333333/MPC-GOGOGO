@@ -7,10 +7,8 @@
     "每周定时任务只会更新 updatedAt，不会动你手填的型号和价格。",
     "字段说明见 README.md 的「数据怎么填」一节。"
   ],
-  "updatedAt": "2026-09-23",
-
+  "updatedAt": "2026-10-05",
   "models": [],
-
   "parts": {
     "cpu": [],
     "gpu": [],
@@ -21,7 +19,6 @@
     "cooler": [],
     "case": []
   },
-
   "_example": {
     "_说明": "下面是填好之后的形状，看一眼就懂。照这个结构往上面 models / parts 里加就行。",
     "model": {
@@ -42,8 +39,16 @@
         "case": "铝合金侧透"
       },
       "benchmarks": [
-        { "label": "赛博朋克 2077 · 2K 高画质", "value": 0, "unit": "fps" },
-        { "label": "烤机 30 分钟 · CPU 温度", "value": 0, "unit": "℃" }
+        {
+          "label": "赛博朋克 2077 · 2K 高画质",
+          "value": 0,
+          "unit": "fps"
+        },
+        {
+          "label": "烤机 30 分钟 · CPU 温度",
+          "value": 0,
+          "unit": "℃"
+        }
       ]
     },
     "part": {
@@ -55,17 +60,48 @@
       "note": "备注可留空"
     }
   },
-
   "configurator": {
     "categories": [
-      { "key": "cpu", "label": "CPU", "required": true },
-      { "key": "motherboard", "label": "主板", "required": true },
-      { "key": "gpu", "label": "显卡", "required": true },
-      { "key": "ram", "label": "内存", "required": true },
-      { "key": "storage", "label": "存储", "required": true },
-      { "key": "psu", "label": "电源", "required": true },
-      { "key": "cooler", "label": "散热", "required": true },
-      { "key": "case", "label": "机箱", "required": true }
+      {
+        "key": "cpu",
+        "label": "CPU",
+        "required": true
+      },
+      {
+        "key": "motherboard",
+        "label": "主板",
+        "required": true
+      },
+      {
+        "key": "gpu",
+        "label": "显卡",
+        "required": true
+      },
+      {
+        "key": "ram",
+        "label": "内存",
+        "required": true
+      },
+      {
+        "key": "storage",
+        "label": "存储",
+        "required": true
+      },
+      {
+        "key": "psu",
+        "label": "电源",
+        "required": true
+      },
+      {
+        "key": "cooler",
+        "label": "散热",
+        "required": true
+      },
+      {
+        "key": "case",
+        "label": "机箱",
+        "required": true
+      }
     ],
     "buildFee": null
   }
