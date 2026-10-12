@@ -7,7 +7,7 @@
     "每周定时任务只会更新 updatedAt，不会动你手填的型号和价格。",
     "字段说明见 README.md 的「数据怎么填」一节。"
   ],
-  "updatedAt": "2026-10-05",
+  "updatedAt": "2026-10-12",
   "models": [],
   "parts": {
     "cpu": [],
